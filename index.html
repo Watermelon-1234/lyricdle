@@ -78,7 +78,9 @@
       var r = await fetch("https://lyricsmelon.948794harvey.workers.dev/").then(response => response.json());
 
       if(!r || !r["lyrics"] || !r["singer"] || !r["song_name"])
-      r = get_lyrics()
+      {
+        r = get_lyrics()
+      }
 
       return r;
     }
