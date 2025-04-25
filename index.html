@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>猜歌詞遊戲</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #111;
+      color: #fff;
+      text-align: center;
+      padding: 20px;
+    }
+    .lyrics {
+      margin-top: 20px;
+      line-height: 2em;
+    }
+    .char {
+      display: inline-block;
+      width: 1.5em;
+      height: 1.5em;
+      margin: 2px;
+      background-color: black;
+      color: black;
+      border: 1px solid white;
+      transition: 0.2s;
+    }
+    .revealed {
+      background-color: transparent;
+      color: white;
+    }
+    input {
+      padding: 10px;
+      font-size: 16px;
+      width: 300px;
+      margin-top: 20px;
+    }
+    #log {
+      margin-top: 10px;
+      color: #aaa;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎵 猜歌詞遊戲 🎵</h1>
+  <input id="input" placeholder="輸入一個字 或 猜歌名">
+  <div id="log"></div>
+  <div class="lyrics" id="lyrics"></div>
+  <div id="guessed"></div>
+  <script>
+
+
+    const lyricsContainer = document.getElementById("lyrics");
+    const log = document.getElementById("log");
+    const input = document.getElementById("input");
+    const geussed =document.getElementById("guessed");
+    let guessedChars = new Set();
+    let guessCount = 0;
+    let lyrics;
+    let singer = "";
+    let full_lyrics = ""
+    let songTitle = ""
+    let init_needed = true;
+    async function get_lyrics()
+    {
+      var r = await fetch("https://lyricsmelon.948794harvey.workers.dev/").then(response => response.json());
+
+      await console.log(r)
+      return r;
+    }
+
+    // 初始化歌詞欄位
+    async function renderLyrics() {
+      if(init_needed)
+      {
+        var question = await get_lyrics();
+        console.log(question)
+        singer = question["singer"];
+        songTitle = question["song_name"];
+        lyrics = question["lyrics"];
+        full_lyrics = lyrics.join("");
+        console.log("lyrics",lyrics);
+        init_needed = false;
+      }
+      lyricsContainer.innerHTML = '';
+      for (let sentence of lyrics) {
+        for(let char of sentence)
+        {
+          const span = document.createElement('span');
+          span.className = 'char';
+          if (guessedChars.has(char) || char === ' ') {
+            span.classList.add('revealed');
+            span.textContent = char;
+          } else {
+            span.textContent = '　'; // 全形空白維持寬度
+          }
+          lyricsContainer.appendChild(span);
+        }
+        lyricsContainer.appendChild(document.createElement('br'));
+      }
+    }
+
+    // 處理輸入
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const value = input.value.trim();
+        input.value = '';
+        if (!value) return;
+
+        guessCount++;
+
+        if (value.length === 1) {
+          if(guessedChars.has(value))
+          {
+            log.textContent = `這個字已經問過了!`
+          }
+          else if (full_lyrics.includes(value)) {
+            guessedChars.add(value);
+            renderLyrics();
+            log.textContent = `發現歌詞中有「${value}」這個字！(共猜了 ${guessCount} 次)`;
+          }
+          else {
+            log.textContent = `歌詞中沒有「${value}」這個字喔～ (共猜了 ${guessCount} 次)`;
+          }
+          guessed.textContent = Array.from(guessedChars).join(" ");
+        } else {
+          if (value === songTitle) {
+            log.textContent = `🎉 恭喜你猜到正確的歌名：「${songTitle}」！你總共猜了 ${guessCount} 次`;
+            guessedChars = new Set(lyrics); // 全部顯示
+            renderLyrics();
+          } else {
+            log.textContent = `不是這首歌 😢`;
+          }
+        }
+      }
+    });
+
+    renderLyrics();
+	
+  </script>
+</body>
+</html>
