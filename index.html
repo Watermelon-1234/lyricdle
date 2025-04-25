@@ -77,7 +77,9 @@
     {
       var r = await fetch("https://lyricsmelon.948794harvey.workers.dev/").then(response => response.json());
 
-      await console.log(r)
+      if(!r || !r["lyrics"] || !r["singer"] || !r["song_name"])
+      r = get_lyrics()
+
       return r;
     }
 
@@ -91,6 +93,7 @@
     async function renderLyrics() {
       if(init_needed)
       {
+        lyricsContainer.innerHTML = `<span>請稍等</span>`;
         var question = await get_lyrics();
         guessedChars = new Set();
         wrongChars = new Set();
