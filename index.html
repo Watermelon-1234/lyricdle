@@ -25,6 +25,15 @@
       border: 1px solid white;
       transition: 0.2s;
     }
+    .space
+    {
+      display: inline-block;
+      width: 1.5em;
+      height: 1.5em;
+      background-color: black;
+      color: black;
+      transition: 0.2s;
+    }
     .revealed {
       background-color: transparent;
       color: white;
@@ -47,19 +56,22 @@
   <div id="log"></div>
   <div class="lyrics" id="lyrics"></div>
   <div id="guessed"></div>
+  <div id="wrong"></div>
   <script>
 
 
     const lyricsContainer = document.getElementById("lyrics");
     const log = document.getElementById("log");
     const input = document.getElementById("input");
-    const geussed =document.getElementById("guessed");
+    const geussed = document.getElementById("guessed");
+    const wrong = document.getElementById("wrong");
     let guessedChars = new Set();
+    let wrongChars = new Set();
     let guessCount = 0;
     let lyrics;
     let singer = "";
-    let full_lyrics = ""
-    let songTitle = ""
+    let full_lyrics = "";
+    let songTitle = "";
     let init_needed = true;
     async function get_lyrics()
     {
@@ -69,29 +81,45 @@
       return r;
     }
 
+    function restart()
+    {
+      init_needed = true;
+      renderLyrics();
+    }
+
     // 初始化歌詞欄位
     async function renderLyrics() {
       if(init_needed)
       {
         var question = await get_lyrics();
-        console.log(question)
-        singer = question["singer"];
-        songTitle = question["song_name"];
+        guessedChars = new Set();
+        wrongChars = new Set();
+        guessCount = 0;
         lyrics = question["lyrics"];
+        singer = question["singer"];
         full_lyrics = lyrics.join("");
-        console.log("lyrics",lyrics);
+        songTitle = question["song_name"];
         init_needed = false;
+        console.log(question)
+        console.log("lyrics",lyrics);
       }
       lyricsContainer.innerHTML = '';
       for (let sentence of lyrics) {
         for(let char of sentence)
         {
           const span = document.createElement('span');
-          span.className = 'char';
-          if (guessedChars.has(char) || char === ' ') {
+          if(char === ' ')
+          {
+            span.classList.add('space');
+            span.textContent = '　'; // 全形空白維持寬度
+          }
+          else if (guessedChars.has(char)) {
+            span.className = 'char';
             span.classList.add('revealed');
             span.textContent = char;
-          } else {
+          }
+          else {
+            span.className = 'char';
             span.textContent = '　'; // 全形空白維持寬度
           }
           lyricsContainer.appendChild(span);
@@ -107,29 +135,33 @@
         input.value = '';
         if (!value) return;
 
-        guessCount++;
 
         if (value.length === 1) {
-          if(guessedChars.has(value))
+          if(guessedChars.has(value)||wrongChars.has(value))
           {
             log.textContent = `這個字已經問過了!`
           }
           else if (full_lyrics.includes(value)) {
+            guessCount++;
             guessedChars.add(value);
+            guessed.textContent = "猜對的字：" + Array.from(guessedChars).join(" ");
             renderLyrics();
             log.textContent = `發現歌詞中有「${value}」這個字！(共猜了 ${guessCount} 次)`;
           }
           else {
+            guessCount++;
+            wrongChars.add(value);
+            wrong.textContent = "猜錯的字：" + Array.from(wrongChars).join(" ");
             log.textContent = `歌詞中沒有「${value}」這個字喔～ (共猜了 ${guessCount} 次)`;
           }
-          guessed.textContent = Array.from(guessedChars).join(" ");
         } else {
           if (value === songTitle) {
             log.textContent = `🎉 恭喜你猜到正確的歌名：「${songTitle}」！你總共猜了 ${guessCount} 次`;
             guessedChars = new Set(lyrics); // 全部顯示
             renderLyrics();
+            lyricsContainer.innerHTML += `  <input type="button" onclick="restart()" value="再來一場">`;
           } else {
-            log.textContent = `不是這首歌 😢`;
+            log.textContent = `不是這首歌 😢菜雞`;
           }
         }
       }
