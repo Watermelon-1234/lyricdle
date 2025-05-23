@@ -53,6 +53,9 @@
 <body>
   <h1>🎵 猜歌詞遊戲 🎵</h1>
   <input id="input" placeholder="輸入一個字 或 猜歌名">
+  <div>
+    <input type="button" value="我放棄/顯示歌詞＋答案" onclick="show_all()">
+  </div>
   <div id="log"></div>
   <div class="lyrics" id="lyrics"></div>
   <div id="guessed"></div>
@@ -105,8 +108,8 @@
         full_lyrics = lyrics.join("");
         songTitle = question["song_name"];
         init_needed = false;
-        console.log(question)
-        console.log("lyrics",lyrics);
+        // console.log(question)
+        // console.log("lyrics",lyrics);
       }
       lyricsContainer.innerHTML = '';
       for (let sentence of lyrics) {
@@ -122,6 +125,8 @@
             span.className = 'char';
             span.classList.add('revealed');
             span.textContent = char;
+            span.style.backgroundColor = 'gray';
+            span.id = 'lyrics';
           }
           else {
             span.className = 'char';
@@ -162,8 +167,9 @@
         } else {
           if (value === songTitle) {
             log.textContent = `🎉 恭喜你猜到正確的歌名：「${songTitle}」！你總共猜了 ${guessCount} 次`;
-            guessedChars = new Set(lyrics); // 全部顯示
+            guessedChars = new Set(lyrics.join('')); // 全部顯示
             renderLyrics();
+            window.open("https://www.youtube.com/results?search_query="+songTitle, '_blank').focus();
             lyricsContainer.innerHTML += `  <input type="button" onclick="restart()" value="再來一場">`;
           } else {
             log.textContent = `不是這首歌 😢菜雞`;
@@ -171,6 +177,14 @@
         }
       }
     });
+
+
+    function show_all() {
+      guessedChars = new Set(lyrics.join('')); // 全部顯示
+      renderLyrics();
+      window.open("https://www.youtube.com/results?search_query="+songTitle, '_blank').focus();
+      lyricsContainer.innerHTML += `  <div><input type="button" onclick="restart()" value="再來一場"></div>`;
+    }
 
     renderLyrics();
 	
